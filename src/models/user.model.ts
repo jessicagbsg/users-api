@@ -30,7 +30,16 @@ export type CreateOrUpdateUserDTO = Omit<
   "id" | "createdAt" | "updatedAt" | "deletedAt"
 >;
 
-export class User extends Model<UserSchemaType> {}
+export class User extends Model<UserSchemaType> {
+  declare id: number;
+  declare name: string;
+  declare email: string;
+  declare age: number;
+  declare active: boolean;
+  declare createdAt: Date;
+  declare updatedAt: Date;
+  declare deletedAt: Date | null;
+}
 
 User.init(
   {
@@ -57,6 +66,8 @@ User.init(
       allowNull: false,
       defaultValue: true,
     },
+    createdAt: DataTypes.DATE,
+    updatedAt: DataTypes.DATE,
     deletedAt: {
       type: DataTypes.DATE,
       allowNull: true,

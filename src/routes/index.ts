@@ -1,3 +1,8 @@
 import { Router } from "express";
+import { userRouter } from "./user.routes";
 
-export const setupRoutes = (router: Router): void => {};
+const appRoutes = Router();
+
+appRoutes.use("/users", userRouter);
+
+export { appRoutes };

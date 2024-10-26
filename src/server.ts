@@ -1,19 +1,11 @@
 import dotenv from "dotenv";
-import { db } from "@/config";
+import { initializeDatabase } from "@/config";
 import { validateEnvironmentVariables } from "@/helpers";
-import app from "@/app";
+import { app } from "@/app";
 
 dotenv.config();
-
 validateEnvironmentVariables();
-
-db.authenticate()
-  .then(() => {
-    console.log("Database connected");
-  })
-  .catch((err) => {
-    console.log("Error: " + err);
-  });
+initializeDatabase();
 
 const PORT = process.env.PORT || 3000;
 
