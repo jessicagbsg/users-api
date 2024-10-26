@@ -1,7 +1,11 @@
-import app from "./app";
 import dotenv from "dotenv";
-import db from "./config/database.config";
+import { db } from "@/config";
+import { validateEnvironmentVariables } from "@/helpers";
+import app from "@/app";
+
 dotenv.config();
+
+validateEnvironmentVariables();
 
 db.authenticate()
   .then(() => {
