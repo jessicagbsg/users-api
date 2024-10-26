@@ -3,5 +3,4 @@
 /coverage
 .env
 .DS_Store
-dev.db
-dev.db-journal
+database.sqlite
