@@ -1,1 +1,1 @@
-export { User, UserSchemaType } from "./user.model";
+export * from "./user.model";
