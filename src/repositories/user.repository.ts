@@ -1,12 +1,13 @@
-import { User, UserSchemaType, UserSchema } from "@/models";
+import { CreateOrUpdateUserDTO, User, UserSchemaType } from "@/models";
 import { Op } from "sequelize";
 
 export interface IUserRepository {
-  create(userData: UserSchemaType): Promise<User>;
-  findById(userId: number): Promise<User | null>;
-  update(userId: number, updates: Partial<UserSchemaType>): Promise<User | null>;
+  create(userData: CreateOrUpdateUserDTO): Promise<UserSchemaType>;
+  findAll(params: FindUsersParams): Promise<UserSchemaType[]>;
+  findById(userId: number): Promise<UserSchemaType | null>;
+  findByEmail(userEmail: string): Promise<UserSchemaType | null>;
+  update(userId: number, updates: CreateOrUpdateUserDTO): Promise<UserSchemaType | null>;
   delete(userId: number): Promise<boolean>;
-  findAll(params: FindUsersParams): Promise<User[]>;
 }
 
 export type FindUsersParams = {
@@ -23,16 +24,18 @@ export class UserRepository implements IUserRepository {
     this.create = this.create.bind(this);
     this.findAll = this.findAll.bind(this);
     this.findById = this.findById.bind(this);
+    this.findByEmail = this.findByEmail.bind(this);
     this.update = this.update.bind(this);
     this.delete = this.delete.bind(this);
   }
 
-  async create(userData: UserSchemaType): Promise<User> {
-    return await User.create(userData);
+  async create(userData: CreateOrUpdateUserDTO): Promise<UserSchemaType> {
+    return (await User.create(userData)).dataValues;
   }
 
-  async findAll({ limit, offset, minAge, maxAge, name, email }: FindUsersParams): Promise<User[]> {
-    return await User.findAll({
+  async findAll(params: FindUsersParams): Promise<UserSchemaType[]> {
+    const { limit, offset, minAge, maxAge, name, email } = params;
+    const users = await User.findAll({
       limit,
       offset,
       where: {
@@ -46,15 +49,23 @@ export class UserRepository implements IUserRepository {
         },
       },
     });
+
+    return users.map((user) => user.dataValues);
   }
 
-  async findById(userId: number): Promise<User | null> {
-    return await User.findByPk(userId);
+  async findById(userId: number) {
+    const user = await User.findByPk(userId);
+    return user?.dataValues ?? null;
   }
 
-  async update(userId: number, updates: Omit<UserSchemaType, "id">): Promise<User | null> {
+  async findByEmail(userEmail: string): Promise<UserSchemaType | null> {
+    const user = await User.findOne({ where: { email: userEmail } });
+    return user?.dataValues ?? null;
+  }
+
+  async update(userId: number, updates: CreateOrUpdateUserDTO): Promise<UserSchemaType | null> {
     const updatedRows = await User.update(updates, { where: { id: userId }, returning: true });
-    return updatedRows[1][0] || null;
+    return updatedRows[1][0].dataValues || null;
   }
 
   async delete(userId: number): Promise<boolean> {

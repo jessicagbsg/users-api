@@ -18,10 +18,17 @@ export const UserSchema = z.object({
     .email(),
   age: z.number().int().optional(),
   active: z.boolean().optional().default(true),
+  createdAt: z.date().optional(),
+  updatedAt: z.date().optional(),
   deletedAt: z.date().optional(),
 });
 
 export type UserSchemaType = z.infer<typeof UserSchema>;
+
+export type CreateOrUpdateUserDTO = Omit<
+  UserSchemaType,
+  "id" | "createdAt" | "updatedAt" | "deletedAt"
+>;
 
 export class User extends Model<UserSchemaType> {}
 
