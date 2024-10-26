@@ -28,7 +28,7 @@ export class UserService implements IUserService {
 
   async create(userData: CreateOrUpdateUserDTO): Promise<UserSchemaType> {
     const existingUser = await this.userRepository.findByEmail(userData.email);
-    if (existingUser) throw new Error("User with this email already exists");
+    if (existingUser) throw new Error("User already exists");
 
     this.validateCreateOrUpdateUser(userData);
 
@@ -66,7 +66,7 @@ export class UserService implements IUserService {
     if (!existingUser) throw new Error("User not found");
   }
 
-  private validateCreateOrUpdateUser(userData: UserSchemaType): void {
+  private validateCreateOrUpdateUser(userData: CreateOrUpdateUserDTO): void {
     const result = UserSchema.safeParse(userData);
 
     if (!result.success) throw new Error(result.error.errors.join(", "));

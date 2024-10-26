@@ -1,5 +1,5 @@
 import { CreateOrUpdateUserDTO, User, UserSchemaType } from "@/models";
-import { Op } from "sequelize";
+import { Op, WhereOptions } from "sequelize";
 
 export interface IUserRepository {
   create(userData: CreateOrUpdateUserDTO): Promise<UserSchemaType>;
@@ -35,22 +35,33 @@ export class UserRepository implements IUserRepository {
 
   async findAll(params: FindUsersParams): Promise<UserSchemaType[]> {
     const { limit, offset, minAge, maxAge, name, email } = params;
+    const where = this.buildWhereClause({ minAge, maxAge, name, email });
     const users = await User.findAll({
       limit,
       offset,
-      where: {
-        name: name ? { [Op.iLike]: `%${name}%` } : undefined,
-        email: email ? { [Op.iLike]: `%${email}%` } : undefined,
-        age: {
-          [Op.and]: [
-            minAge ? { [Op.gte]: minAge } : undefined,
-            maxAge ? { [Op.lte]: maxAge } : undefined,
-          ].filter(Boolean),
-        },
-      },
+      where,
     });
 
     return users.map((user) => user.dataValues);
+  }
+
+  private buildWhereClause({ minAge, maxAge, name, email }: Partial<FindUsersParams>) {
+    const where: WhereOptions = {};
+
+    if (name) where.name = { [Op.like]: `%${name}%` };
+
+    if (email) where.email = { [Op.like]: `%${email}%` };
+
+    if (minAge || maxAge) {
+      where.age = {
+        [Op.and]: [
+          minAge ? { [Op.gte]: minAge } : undefined,
+          maxAge ? { [Op.lte]: maxAge } : undefined,
+        ].filter(Boolean),
+      };
+    }
+
+    return where;
   }
 
   async findById(userId: number) {
