@@ -79,7 +79,8 @@ the column "deletedAt" is being updated with the current timestamp.
 
 To check the documentation of this project download the collection bellow and import into postman.
 
-[Uploading Users API.postman_collection.json…]()
+[Users API.postman_collection.json](https://github.com/user-attachments/files/17535663/Users.API.postman_collection.json)
+
 
 # Tools Used
 
