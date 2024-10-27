@@ -1,6 +1,6 @@
 import { UserSchemaType, UserSchema, CreateUserDTO, UpdateUserDTO } from "@/models";
 import { FindUsersParams, UserRepository } from "@/repositories";
-import { ZodError, ZodIssue } from "zod";
+import { ZodIssue } from "zod";
 
 type UserServiceDependencies = {
   userRepository: UserRepository;
@@ -38,7 +38,32 @@ export class UserService implements IUserService {
   }
 
   async findAll(params: FindUsersParams): Promise<UserSchemaType[]> {
+    const { minAge, maxAge, age } = params;
+    if (minAge && maxAge && minAge > maxAge)
+      throw new Error(
+        JSON.stringify({
+          status: 400,
+          message: "Invalid age range: min age cannot be bigger than max age",
+        })
+      );
+
+    if (minAge && minAge < 0)
+      throw new Error(
+        JSON.stringify({ status: 400, message: "Invalid min age: min age must be higher than 0" })
+      );
+
+    if (maxAge && maxAge < 0)
+      throw new Error(
+        JSON.stringify({ status: 400, message: "Invalid max age: max age must be higher than 0" })
+      );
+
+    if (age && (minAge || maxAge))
+      throw new Error(
+        JSON.stringify({ status: 400, message: "You can't use age with min age or max age" })
+      );
+
     const users = await this.userRepository.findAll(params);
+
     if (!users.length)
       throw new Error(JSON.stringify({ status: 400, message: "No users were found" }));
 

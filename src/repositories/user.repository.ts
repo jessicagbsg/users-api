@@ -13,10 +13,11 @@ export interface IUserRepository {
 export type FindUsersParams = {
   limit: number;
   offset: number;
-  minAge?: number;
-  maxAge?: number;
   name?: string;
   email?: string;
+  age?: number;
+  minAge?: number;
+  maxAge?: number;
 };
 
 export class UserRepository implements IUserRepository {
@@ -45,14 +46,16 @@ export class UserRepository implements IUserRepository {
     return users.map((user) => user.dataValues);
   }
 
-  private buildWhereClause({ minAge, maxAge, name, email }: Partial<FindUsersParams>) {
+  private buildWhereClause({ minAge, maxAge, name, email, age }: Partial<FindUsersParams>) {
     const where: WhereOptions = { deletedAt: null };
 
     if (name) where.name = { [Op.like]: `%${name}%` };
 
     if (email) where.email = { [Op.like]: `%${email}%` };
 
-    if (minAge || maxAge) {
+    if (age && !(minAge || maxAge)) where.age = age;
+
+    if (!age && (minAge || maxAge)) {
       where.age = {
         [Op.and]: [
           minAge ? { [Op.gte]: minAge } : undefined,
