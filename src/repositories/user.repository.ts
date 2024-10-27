@@ -11,8 +11,8 @@ export interface IUserRepository {
 }
 
 export type FindUsersParams = {
-  limit: number;
-  offset: number;
+  limit?: number;
+  offset?: number;
   name?: string;
   email?: string;
   age?: number;
