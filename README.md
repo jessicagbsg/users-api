@@ -5,6 +5,7 @@ This is a simple api to create, read, update and delete users.
 ## Running the project
 
 To run the project and use it you have to:
+
 1. clone the project and open in your prefered editor
 2. copy the `env.example` rename it to `.env`, fill in the PORT and DB_STORAGE with your prefered values, eg:
 ```
@@ -12,6 +13,9 @@ PORT=3000
 DB_STORAGE="./database.sqlite"
 ```
 3. run `npm i` and then `npm run dev`.
+
+## Database configuration
+Once the project is running a sqlite file will be created in the path you set for the DB_STORAGE. 
 
 ## Running tests
 To run the tests you just have to go to the project's directory through terminal and run `npm run test`.
