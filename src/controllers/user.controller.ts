@@ -81,7 +81,9 @@ export class UserController implements IUserController {
     try {
       const userId = parseInt(req.params.id, 10);
       const deleted = await this.userService.delete(userId);
-      res.status(204).send(deleted);
+      res
+        .status(200)
+        .json({ message: deleted ? "User successfully deleted" : "Not able to delete user" });
     } catch (error) {
       next(error);
     }

@@ -39,7 +39,8 @@ export class UserService implements IUserService {
 
   async findAll(params: FindUsersParams): Promise<UserSchemaType[]> {
     const { minAge, maxAge, age } = params;
-    if (minAge && maxAge && minAge > maxAge)
+
+    if (!!(minAge && maxAge) && +minAge > +maxAge)
       throw new Error(
         JSON.stringify({
           status: 400,

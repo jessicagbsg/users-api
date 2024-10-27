@@ -35,8 +35,8 @@ export class UserRepository implements IUserRepository {
   }
 
   async findAll(params: FindUsersParams): Promise<UserSchemaType[]> {
-    const { limit, offset, minAge, maxAge, name, email } = params;
-    const where = this.buildWhereClause({ minAge, maxAge, name, email });
+    const { limit, offset, minAge, age, maxAge, name, email } = params;
+    const where = this.buildWhereClause({ minAge, maxAge, age, name, email });
     const users = await User.findAll({
       limit,
       offset,
