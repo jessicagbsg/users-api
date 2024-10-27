@@ -1,6 +1,4 @@
 # Users Api
- 
-## Goal
 This is a simple api to create, read, update and delete users.
 
 # Instructions 
