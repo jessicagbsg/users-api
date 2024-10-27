@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { UserService } from "@/services";
-import { CreateOrUpdateUserDTO } from "@/models";
+import { CreateUserDTO, UpdateUserDTO } from "@/models";
 import { FindUsersParams } from "@/repositories";
 
 type UserControllerDependencies = {
@@ -30,12 +30,15 @@ export class UserController implements IUserController {
 
   async create(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      console.log({ userData: req.body });
-      const userData: CreateOrUpdateUserDTO = req.body;
+      const userData: CreateUserDTO = req.body;
+
+      if (!userData.name || !userData.email)
+        res.status(400).json({ status: "error", message: "Missing required fields" });
+
       const newUser = await this.userService.create(userData);
       res.status(201).json(newUser);
     } catch (error) {
-      res.status(400).json({ error: error });
+      next(error);
     }
   }
 
@@ -62,7 +65,11 @@ export class UserController implements IUserController {
   async update(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const userId = parseInt(req.params.id, 10);
-      const updates: CreateOrUpdateUserDTO = req.body;
+      const updates: UpdateUserDTO = req.body;
+
+      if (Object.keys(updates).length === 0)
+        res.status(400).json({ message: "No fields to update" });
+
       const updatedUser = await this.userService.update(userId, updates);
       res.status(200).json(updatedUser);
     } catch (error) {

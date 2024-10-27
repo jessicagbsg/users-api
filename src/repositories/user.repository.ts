@@ -1,12 +1,12 @@
-import { CreateOrUpdateUserDTO, User, UserSchemaType } from "@/models";
+import { CreateUserDTO, UpdateUserDTO, User, UserSchemaType } from "@/models";
 import { Op, WhereOptions } from "sequelize";
 
 export interface IUserRepository {
-  create(userData: CreateOrUpdateUserDTO): Promise<UserSchemaType>;
+  create(userData: CreateUserDTO): Promise<UserSchemaType>;
   findAll(params: FindUsersParams): Promise<UserSchemaType[]>;
   findById(userId: number): Promise<UserSchemaType | null>;
   findByEmail(userEmail: string): Promise<UserSchemaType | null>;
-  update(userId: number, updates: CreateOrUpdateUserDTO): Promise<UserSchemaType | null>;
+  update(userId: number, userData: UpdateUserDTO): Promise<UserSchemaType | null>;
   delete(userId: number): Promise<boolean>;
 }
 
@@ -29,8 +29,8 @@ export class UserRepository implements IUserRepository {
     this.delete = this.delete.bind(this);
   }
 
-  async create(userData: CreateOrUpdateUserDTO): Promise<UserSchemaType> {
-    return (await User.create(userData)).dataValues;
+  async create(userData: CreateUserDTO): Promise<UserSchemaType> {
+    return (await User.create({ ...userData, active: userData.active ?? true })).dataValues;
   }
 
   async findAll(params: FindUsersParams): Promise<UserSchemaType[]> {
@@ -46,7 +46,7 @@ export class UserRepository implements IUserRepository {
   }
 
   private buildWhereClause({ minAge, maxAge, name, email }: Partial<FindUsersParams>) {
-    const where: WhereOptions = {};
+    const where: WhereOptions = { deletedAt: null };
 
     if (name) where.name = { [Op.like]: `%${name}%` };
 
@@ -65,18 +65,21 @@ export class UserRepository implements IUserRepository {
   }
 
   async findById(userId: number) {
-    const user = await User.findByPk(userId);
+    const user = await User.findOne({ where: { id: userId, deletedAt: null } });
     return user?.dataValues ?? null;
   }
 
   async findByEmail(userEmail: string): Promise<UserSchemaType | null> {
-    const user = await User.findOne({ where: { email: userEmail } });
+    const user = await User.findOne({ where: { email: userEmail, deletedAt: null } });
     return user?.dataValues ?? null;
   }
 
-  async update(userId: number, updates: CreateOrUpdateUserDTO): Promise<UserSchemaType | null> {
-    const updatedRows = await User.update(updates, { where: { id: userId }, returning: true });
-    return updatedRows[1][0].dataValues || null;
+  async update(userId: number, userData: UpdateUserDTO): Promise<UserSchemaType | null> {
+    const [updatedRows] = await User.update(userData, {
+      where: { id: userId },
+    });
+
+    return updatedRows > 0 ? this.findById(userId) : null;
   }
 
   async delete(userId: number): Promise<boolean> {

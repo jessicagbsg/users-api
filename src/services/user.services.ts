@@ -1,14 +1,15 @@
-import { UserSchemaType, UserSchema, CreateOrUpdateUserDTO } from "@/models";
+import { UserSchemaType, UserSchema, CreateUserDTO, UpdateUserDTO } from "@/models";
 import { FindUsersParams, UserRepository } from "@/repositories";
+import { ZodError, ZodIssue } from "zod";
 
 type UserServiceDependencies = {
   userRepository: UserRepository;
 };
 
 export interface IUserService {
-  create(userData: CreateOrUpdateUserDTO): Promise<UserSchemaType>;
-  findById(userId: number): Promise<UserSchemaType | null>;
-  update(userId: number, updates: CreateOrUpdateUserDTO): Promise<UserSchemaType | null>;
+  create(userData: CreateUserDTO): Promise<UserSchemaType>;
+  findById(userId: number): Promise<UserSchemaType>;
+  update(userId: number, userData: UpdateUserDTO): Promise<UserSchemaType | null>;
   delete(userId: number): Promise<boolean>;
   findAll(params: FindUsersParams): Promise<UserSchemaType[]>;
 }
@@ -26,9 +27,10 @@ export class UserService implements IUserService {
     this.delete = this.delete.bind(this);
   }
 
-  async create(userData: CreateOrUpdateUserDTO): Promise<UserSchemaType> {
+  async create(userData: CreateUserDTO): Promise<UserSchemaType> {
     const existingUser = await this.userRepository.findByEmail(userData.email);
-    if (existingUser) throw new Error("User already exists");
+    if (existingUser)
+      throw new Error(JSON.stringify({ status: 400, message: "User already exists" }));
 
     this.validateCreateOrUpdateUser(userData);
 
@@ -37,38 +39,49 @@ export class UserService implements IUserService {
 
   async findAll(params: FindUsersParams): Promise<UserSchemaType[]> {
     const users = await this.userRepository.findAll(params);
-    if (!users.length) throw new Error("No users were found");
+    if (!users.length)
+      throw new Error(JSON.stringify({ status: 400, message: "No users were found" }));
 
     return users;
   }
 
-  async findById(userId: number): Promise<UserSchemaType | null> {
+  async findById(userId: number): Promise<UserSchemaType> {
     const user = await this.userRepository.findById(userId);
-    if (!user) throw new Error("User not found");
+    if (!user) throw new Error(JSON.stringify({ status: 400, message: "User not found" }));
 
     return user;
   }
 
-  async update(userId: number, updates: CreateOrUpdateUserDTO): Promise<UserSchemaType | null> {
-    await this.validateIfUserExists(userId);
-    this.validateCreateOrUpdateUser(updates);
+  async update(userId: number, userData: UpdateUserDTO): Promise<UserSchemaType | null> {
+    const user = await this.findById(userId);
 
-    return this.userRepository.update(userId, updates);
+    const payload = {
+      name: userData.name ?? user.name,
+      email: userData.email ?? user.email,
+      age: userData.age ?? user.age,
+      active: userData.active ?? user.active,
+    };
+
+    this.validateCreateOrUpdateUser(payload);
+
+    return this.userRepository.update(userId, payload);
   }
 
   async delete(userId: number): Promise<boolean> {
-    await this.validateIfUserExists(userId);
+    await this.findById(userId);
     return this.userRepository.delete(userId);
   }
 
-  private async validateIfUserExists(userId: number): Promise<void> {
-    const existingUser = await this.findById(userId);
-    if (!existingUser) throw new Error("User not found");
-  }
-
-  private validateCreateOrUpdateUser(userData: CreateOrUpdateUserDTO): void {
+  private validateCreateOrUpdateUser(userData: CreateUserDTO | UpdateUserDTO): void {
     const result = UserSchema.safeParse(userData);
 
-    if (!result.success) throw new Error(result.error.errors.join(", "));
+    if (!result.success)
+      throw new Error(
+        JSON.stringify({
+          status: 422,
+          message: "Invalid data",
+          issues: result.error.issues.map((issue: ZodIssue) => issue.message),
+        })
+      );
   }
 }
